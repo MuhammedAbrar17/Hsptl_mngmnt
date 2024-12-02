@@ -1,0 +1,25 @@
+/* login */
+
+.bg-yellow {
+    background-color: #04b8ff;
+}
+
+.rounded-card {
+    border-radius: 1rem;
+}
+
+.no-border {
+    border: none;
+}
+
+.rounded-left {
+    border-radius: 1rem 0 0 1rem;
+}
+
+.icon-red {
+    color: #ff0000;
+}
+
+.spaced-text {
+    letter-spacing: 1px;
+}
