@@ -3,7 +3,7 @@ from django.views import View
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth import update_session_auth_hash
@@ -11,19 +11,30 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import get_user_model
 from .forms import CustomUserCreationForm
 
-from .models import Doctor
+from .models import Doctor,User
 
 # Create your views here.
 
 
+
 def index(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('log_in')
     return render(request, 'login.html') 
 
 
-def log_in(request):
+# loginand authenticate
+def admin_required(user):
+    return user.role == 'Admin'
 
+def receptionist_required(user):
+    return user.role == 'Receptionist'
+
+def billing_staff_required(user):
+    return user.role == 'Billing Staff'
+
+
+def log_in(request):
     if request.method == "POST":
         username = request.POST.get("username")
         pass1 = request.POST.get("pass1")
@@ -32,21 +43,57 @@ def log_in(request):
 
         if user is not None:
             login(request, user)
-            return redirect('home')
+
+            if user.role == 'Admin':
+                return redirect(admin_dashboard)
+            elif user.role == 'Receptionist':
+                return redirect(receptionist_dashboard)
+            elif user.role == 'Billing Staff':
+                return redirect(billing_Staf_dashboard)
 
         else:
-            messages.error(request, "invalid username or password")
+            messages.error(request, "Invalid username or password")
             return redirect("log_in")
 
     if request.user.is_authenticated:
-        return redirect('home')
-    
+        
+        if request.user.role == 'Admin':
+            return redirect(admin_dashboard)
+        elif request.user.role == 'Receptionist':
+            return redirect(receptionist_dashboard)
+        elif request.user.role == 'Billing Staff':
+            return redirect(billing_Staf_dashboard)
+
     return render(request, 'login.html')
 
 
-@login_required(login_url='log_in')
-def home(request):
-    return render(request,'home.html')
+    
+def signout(request):
+    logout(request)
+    return HttpResponseRedirect("/")  
+
+
+
+#Role based user
+
+@login_required
+@user_passes_test(admin_required)
+def admin_dashboard(request):
+    return render(request,"admin/admin_dashboard.html")
+
+
+@login_required
+@user_passes_test(receptionist_required)
+def receptionist_dashboard(request):
+    return render(request,"Receptionist/Receptionist_dashboard.html")
+
+
+@login_required
+@user_passes_test(billing_staff_required)
+def billing_Staf_dashboard(request):
+    return render(request,"Billing_Staf/Billing_Staf_dashboard.html")
+
+
 
 
 
@@ -73,10 +120,7 @@ def create_user(request):
 
     return render(request,'admin/create_user.html', {'form': form})
 
-    
-def signout(request):
-    logout(request)
-    return HttpResponseRedirect("/")  
+
 
 
 #list user
